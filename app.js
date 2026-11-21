@@ -6,8 +6,16 @@
   index.html ends with <script src="app.js"></script>.
   There is no build step and no framework.
 
-  A todo is a plain object with three fields:
-    { id: "…", text: "Buy milk", completed: false }
+  A todo is a plain object:
+    {
+      id: "…",
+      text: "Buy milk",
+      completed: false,
+      dueDate: "2026-11-21"   // or null when there is no due date
+    }
+
+  dueDate uses the same text an <input type="date"> gives us: "YYYY-MM-DD".
+  Todos saved before due dates existed have no dueDate field. Those still load.
 */
 
 // Saved under this name in the browser's localStorage.
@@ -23,6 +31,7 @@ let currentFilter = "all";
 // Elements from index.html. querySelector finds them by id.
 const form = document.querySelector("#todo-form");
 const input = document.querySelector("#todo-input");
+const dueDateInput = document.querySelector("#due-date-input");
 const list = document.querySelector("#todo-list");
 const emptyState = document.querySelector("#empty-state");
 const footer = document.querySelector("#todo-footer");
@@ -53,13 +62,16 @@ function onAddTodo(event) {
     return;
   }
 
+  // "" means the user left the date blank. Store that as null.
   todos.push({
     id: createId(),
     text: text,
     completed: false,
+    dueDate: normalizeDueDate(dueDateInput.value),
   });
 
   input.value = "";
+  dueDateInput.value = "";
   saveTodos();
   render();
 }
@@ -115,7 +127,8 @@ function loadTodos() {
       return;
     }
     // Ignore rows that are not the shape we save, so a bad edit cannot crash the page.
-    todos = parsed.filter(isValidTodo);
+    // Then fill in dueDate. Old rows have no date, and that is valid.
+    todos = parsed.filter(isValidTodo).map(withDueDate);
   } catch (error) {
     console.warn("Could not read saved todos. Starting with an empty list.", error);
     todos = [];
@@ -123,12 +136,13 @@ function loadTodos() {
 }
 
 function saveTodos() {
-  // Store only the three fields we use, not anything extra that might be on the object.
+  // Store only the fields we use, not anything extra that might be on the object.
   const toSave = todos.map(function (item) {
     return {
       id: item.id,
       text: item.text,
       completed: item.completed,
+      dueDate: item.dueDate,
     };
   });
 
@@ -141,6 +155,8 @@ function saveTodos() {
 }
 
 function isValidTodo(item) {
+  // dueDate is optional on purpose. A todo saved by an older version
+  // of this app has id, text, and completed, and nothing else.
   return (
     item !== null &&
     typeof item === "object" &&
@@ -148,6 +164,53 @@ function isValidTodo(item) {
     typeof item.text === "string" &&
     typeof item.completed === "boolean"
   );
+}
+
+function withDueDate(item) {
+  return {
+    id: item.id,
+    text: item.text,
+    completed: item.completed,
+    dueDate: normalizeDueDate(item.dueDate),
+  };
+}
+
+// Keep a date only when it is a real calendar day in "YYYY-MM-DD" form.
+// Anything else (missing, blank, or not a real day) becomes null.
+function normalizeDueDate(value) {
+  if (typeof value !== "string" || value === "") {
+    return null;
+  }
+  if (!parseIsoDate(value)) {
+    return null;
+  }
+  return value;
+}
+
+// Turn "2026-11-21" into a local date at midnight.
+// new Date("2026-11-21") is midnight in UTC, which can fall on the
+// previous evening in the US, so we build the date from the parts instead.
+function parseIsoDate(value) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) {
+    return null;
+  }
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const date = new Date(year, month - 1, day);
+
+  // JavaScript rolls an impossible day forward (Feb 31 becomes March).
+  // If the parts changed, this was not a real calendar day.
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return null;
+  }
+  return date;
 }
 
 function onFilterClick(event) {
