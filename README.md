@@ -5,12 +5,24 @@ A small todo list you can run in any modern browser. It is built with plain HTML
 ## What it does
 
 - Add a todo
+- Optionally give a todo a due date, then change or clear that date later
 - Mark a todo done or not done
 - Delete a todo
 - Filter the list: All, Active, or Completed
 - Show how many items are still left
 - Clear every completed item at once
 - Keep the list in this browser with `localStorage`, so it is still there after a refresh
+
+## Due dates
+
+The date field next to "What needs doing?" is optional. Leave it blank to add a task with no deadline.
+
+- A dated task shows the date in a readable form, such as "Sat, Nov 21, 2026".
+- A task that is not done, and whose date is before today, is marked **Overdue**.
+- A task that is not done, and whose date is today, is marked **Due today**.
+- Finishing a task removes those marks. The date stays, so you can still see when it was due.
+- On the task itself, use **Add date** or **Change date** to pick a different day, or **Clear date** to remove it.
+- The date is saved with the rest of the list. Tasks saved before this feature have no date, and they still load.
 
 The list is stored only in the browser that created it. It is not sent to a server. Opening the file directly and opening it from a local web server are treated as different sites, so each one has its own saved list.
 
@@ -38,7 +50,7 @@ Then open `index.html` the same way.
 | --- | --- |
 | `index.html` | The page structure: the heading, the form, the list, and the filter bar. |
 | `styles.css` | How the page looks, including the layout on a narrow screen. |
-| `app.js` | How the page behaves: adding, completing, deleting, filtering, and saving. |
+| `app.js` | How the page behaves: adding, completing, deleting, filtering, due dates, and saving. |
 | `README.md` | This guide. |
 
 ## Hosting later
