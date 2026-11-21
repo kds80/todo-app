@@ -34,6 +34,18 @@
           autocomplete="off"
           required
         />
+        <!--
+          Optional due date. The browser draws the calendar for type="date".
+          Leaving it blank is allowed: not every task has a deadline.
+          The value is either "" or a date like "2026-11-21".
+        -->
+        <div class="due-field">
+          <label for="due-date-input">
+            Due date
+            <span class="optional">(optional)</span>
+          </label>
+          <input id="due-date-input" name="due" type="date" />
+        </div>
         <button type="submit">Add</button>
       </form>
 

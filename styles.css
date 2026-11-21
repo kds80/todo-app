@@ -76,7 +76,7 @@ h1 {
   margin-bottom: 16px;
 }
 
-.todo-form input {
+#todo-input {
   flex: 1;
   min-width: 0;
   padding: 14px 16px;
@@ -87,8 +87,42 @@ h1 {
   box-shadow: var(--shadow);
 }
 
-.todo-form input::placeholder {
+#todo-input::placeholder {
   color: #8d96a3;
+}
+
+/*
+  The due date sits beside the text field. It is a native date
+  input, so the browser provides the calendar popup.
+*/
+.due-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--muted);
+  box-shadow: var(--shadow);
+  font-size: 0.92rem;
+}
+
+.due-field label {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.due-field .optional {
+  font-weight: 500;
+  color: #8d96a3;
+}
+
+.due-field input {
+  border: 0;
+  padding: 12px 0;
+  background: transparent;
+  color: var(--ink);
 }
 
 .todo-form button,
@@ -134,7 +168,7 @@ h1 {
 
 .todo {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
   padding: 14px 16px;
   border-bottom: 1px solid var(--line);
@@ -147,13 +181,18 @@ h1 {
 .todo input[type="checkbox"] {
   width: 1.15rem;
   height: 1.15rem;
+  margin-top: 3px;
   accent-color: var(--accent);
   flex: 0 0 auto;
 }
 
-.todo-text {
+.todo-body {
   flex: 1;
   min-width: 0;
+}
+
+.todo-text {
+  display: block;
   line-height: 1.4;
   overflow-wrap: anywhere;
 }
@@ -161,6 +200,98 @@ h1 {
 .todo.is-done .todo-text {
   color: #8b93a0;
   text-decoration: line-through;
+}
+
+/* A colored bar plus a text label. Color is not the only signal. */
+.todo.is-overdue {
+  background: #fff7f5;
+  box-shadow: inset 3px 0 0 var(--danger);
+}
+
+.todo.is-due-today {
+  background: #f4faf8;
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.due-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.todo.is-overdue .due-date {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.todo.is-due-today .due-date {
+  color: var(--accent-dark);
+  font-weight: 600;
+}
+
+.due-flag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.due-flag.is-overdue {
+  background: #f8ecec;
+  color: var(--danger);
+}
+
+.due-flag.is-today {
+  background: #e7f3f0;
+  color: var(--accent-dark);
+}
+
+.due-editor {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.due-editor-label {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.due-editor input[type="date"] {
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+  font-size: 0.85rem;
+}
+
+.clear-date-button {
+  padding: 4px 8px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.clear-date-button:hover {
+  background: #f4f1ea;
+  color: var(--ink);
 }
 
 .delete-button {
@@ -269,6 +400,10 @@ h1 {
 
   .todo-form button {
     padding: 12px 18px;
+  }
+
+  .due-field {
+    justify-content: space-between;
   }
 
   .todo-footer {
