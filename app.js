@@ -10,7 +10,11 @@
     { id: "…", text: "Buy milk", completed: false }
 */
 
-// The list we draw on the page. It starts empty.
+// Saved under this name in the browser's localStorage.
+// localStorage keeps the list after a refresh, but only in this browser.
+const STORAGE_KEY = "todos-v1";
+
+// The list we draw on the page. Filled from localStorage on startup.
 let todos = [];
 
 // Which filter button is selected: "all", "active", or "completed".
@@ -34,7 +38,10 @@ filterButtons.forEach(function (button) {
   button.addEventListener("click", onFilterClick);
 });
 
-// Draw the empty list once, so the footer stays hidden until the first todo.
+// Read any saved list, then draw it. A refresh comes back through here.
+// `function loadTodos` is declared further down. Function declarations can be
+// called from above the line where they are written.
+loadTodos();
 render();
 
 function onAddTodo(event) {
@@ -53,6 +60,7 @@ function onAddTodo(event) {
   });
 
   input.value = "";
+  saveTodos();
   render();
 }
 
@@ -70,6 +78,7 @@ function onToggleTodo(event) {
 
   // The checkbox has already flipped. Copy that into our list.
   todo.completed = checkbox.checked;
+  saveTodos();
   render();
 }
 
@@ -83,6 +92,7 @@ function onDeleteTodo(event) {
   todos = todos.filter(function (item) {
     return item.id !== id;
   });
+  saveTodos();
   render();
 }
 
@@ -90,7 +100,54 @@ function onClearCompleted() {
   todos = todos.filter(function (item) {
     return item.completed === false;
   });
+  saveTodos();
   render();
+}
+
+function loadTodos() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      return;
+    }
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) {
+      return;
+    }
+    // Ignore rows that are not the shape we save, so a bad edit cannot crash the page.
+    todos = parsed.filter(isValidTodo);
+  } catch (error) {
+    console.warn("Could not read saved todos. Starting with an empty list.", error);
+    todos = [];
+  }
+}
+
+function saveTodos() {
+  // Store only the three fields we use, not anything extra that might be on the object.
+  const toSave = todos.map(function (item) {
+    return {
+      id: item.id,
+      text: item.text,
+      completed: item.completed,
+    };
+  });
+
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+  } catch (error) {
+    // Private browsing can refuse storage. The list still works until the tab closes.
+    console.warn("Could not save todos in this browser.", error);
+  }
+}
+
+function isValidTodo(item) {
+  return (
+    item !== null &&
+    typeof item === "object" &&
+    typeof item.id === "string" &&
+    typeof item.text === "string" &&
+    typeof item.completed === "boolean"
+  );
 }
 
 function onFilterClick(event) {
