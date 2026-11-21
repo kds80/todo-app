@@ -13,6 +13,9 @@
 // The list we draw on the page. It starts empty.
 let todos = [];
 
+// Which filter button is selected: "all", "active", or "completed".
+let currentFilter = "all";
+
 // Elements from index.html. querySelector finds them by id.
 const form = document.querySelector("#todo-form");
 const input = document.querySelector("#todo-input");
@@ -21,11 +24,15 @@ const emptyState = document.querySelector("#empty-state");
 const footer = document.querySelector("#todo-footer");
 const remainingCount = document.querySelector("#remaining-count");
 const clearCompletedButton = document.querySelector("#clear-completed");
+const filterButtons = document.querySelectorAll("[data-filter]");
 
 form.addEventListener("submit", onAddTodo);
 list.addEventListener("change", onToggleTodo);
 list.addEventListener("click", onDeleteTodo);
 clearCompletedButton.addEventListener("click", onClearCompleted);
+filterButtons.forEach(function (button) {
+  button.addEventListener("click", onFilterClick);
+});
 
 // Draw the empty list once, so the footer stays hidden until the first todo.
 render();
@@ -86,6 +93,26 @@ function onClearCompleted() {
   render();
 }
 
+function onFilterClick(event) {
+  currentFilter = event.currentTarget.dataset.filter;
+  render();
+}
+
+// The footer count uses every todo. The list itself uses this filtered copy.
+function visibleTodos() {
+  if (currentFilter === "active") {
+    return todos.filter(function (item) {
+      return item.completed === false;
+    });
+  }
+  if (currentFilter === "completed") {
+    return todos.filter(function (item) {
+      return item.completed === true;
+    });
+  }
+  return todos;
+}
+
 // Rebuild the list from the `todos` array. The page is a view of that array.
 function render() {
   const remaining = todos.filter(function (item) {
@@ -94,20 +121,40 @@ function render() {
 
   // Clear the old rows, then add one <li> per todo.
   // User text is set with textContent later, never dropped into HTML.
+  const visible = visibleTodos();
   list.innerHTML = "";
 
-  todos.forEach(function (todo) {
+  visible.forEach(function (todo) {
     list.appendChild(renderTodo(todo));
   });
 
-  const isEmpty = todos.length === 0;
-  emptyState.textContent = "Nothing here yet. Add a task above.";
+  const isEmpty = visible.length === 0;
+  emptyState.textContent = emptyMessage();
   emptyState.classList.toggle("is-hidden", !isEmpty);
   list.classList.toggle("is-hidden", isEmpty);
-  footer.classList.toggle("is-hidden", isEmpty);
+  // The footer stays available while any todo exists, even if a filter hides them.
+  footer.classList.toggle("is-hidden", todos.length === 0);
 
   remainingCount.textContent = remainingLabel(remaining);
   clearCompletedButton.disabled = remaining === todos.length;
+
+  filterButtons.forEach(function (button) {
+    const selected = button.dataset.filter === currentFilter;
+    button.setAttribute("aria-pressed", selected ? "true" : "false");
+  });
+}
+
+function emptyMessage() {
+  if (todos.length === 0) {
+    return "Nothing here yet. Add a task above.";
+  }
+  if (currentFilter === "active") {
+    return "No active tasks.";
+  }
+  if (currentFilter === "completed") {
+    return "No completed tasks.";
+  }
+  return "Nothing here yet. Add a task above.";
 }
 
 function renderTodo(todo) {
