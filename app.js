@@ -28,6 +28,10 @@ let todos = [];
 // Which filter button is selected: "all", "active", or "completed".
 let currentFilter = "all";
 
+// While a date is being typed, several changes arrive close together
+// (month, then day, then year). This timer waits so we paint the finished date.
+let dueDatePaintTimer = null;
+
 // Elements from index.html. querySelector finds them by id.
 const form = document.querySelector("#todo-form");
 const input = document.querySelector("#todo-input");
@@ -42,6 +46,9 @@ const filterButtons = document.querySelectorAll("[data-filter]");
 form.addEventListener("submit", onAddTodo);
 list.addEventListener("change", onToggleTodo);
 list.addEventListener("change", onDueDateChange);
+// focusout bubbles, unlike blur, so the list can hear it.
+// It runs when the user leaves a row's date field.
+list.addEventListener("focusout", onDueDateBlur);
 list.addEventListener("click", onDeleteTodo);
 list.addEventListener("click", onClearDueDate);
 clearCompletedButton.addEventListener("click", onClearCompleted);
@@ -102,6 +109,25 @@ function onDueDateChange(event) {
     return;
   }
 
+  // Save the date, but do not rebuild the row. Rebuilding would replace
+  // the field and drop the keystrokes that have not been typed yet.
+  applyDueDate(dueInput);
+  scheduleDueDatePaint(dueInput);
+}
+
+function onDueDateBlur(event) {
+  const dueInput = event.target.closest("[data-action='set-due']");
+  if (!dueInput) {
+    return;
+  }
+
+  applyDueDate(dueInput);
+  // The click that moved focus (Clear date, for example) has to run
+  // before this redraw. Otherwise the redraw removes that button first.
+  window.setTimeout(render, 0);
+}
+
+function applyDueDate(dueInput) {
   const id = dueInput.closest("[data-id]").dataset.id;
   const todo = findTodo(id);
   if (!todo) {
@@ -111,7 +137,63 @@ function onDueDateChange(event) {
   // Empty means the calendar field was cleared. A real date is "YYYY-MM-DD".
   todo.dueDate = normalizeDueDate(dueInput.value);
   saveTodos();
-  render();
+}
+
+function scheduleDueDatePaint(dueInput) {
+  window.clearTimeout(dueDatePaintTimer);
+  dueDatePaintTimer = window.setTimeout(function () {
+    dueDatePaintTimer = null;
+    // Blur may already have rebuilt the row. The old field is then gone.
+    if (!dueInput.isConnected) {
+      return;
+    }
+    paintDueAppearance(dueInput);
+  }, 200);
+}
+
+// Refresh the friendly date, the Overdue / Due today colors, and the
+// Clear date button without touching the date field the user is editing.
+function paintDueAppearance(dueInput) {
+  const item = dueInput.closest(".todo");
+  const todo = findTodo(item.dataset.id);
+  if (!todo) {
+    return;
+  }
+
+  const status = dueStatus(todo);
+  item.classList.toggle("is-overdue", status === "overdue");
+  item.classList.toggle("is-due-today", status === "today");
+
+  const summary = item.querySelector(".due-line");
+  if (!todo.dueDate) {
+    if (summary) {
+      summary.remove();
+    }
+  } else if (summary) {
+    summary.replaceWith(renderDueSummary(todo, status));
+  } else {
+    const editor = item.querySelector(".due-editor");
+    editor.parentNode.insertBefore(renderDueSummary(todo, status), editor);
+  }
+
+  const labelText = item.querySelector(".due-editor-label span");
+  if (labelText) {
+    labelText.textContent = todo.dueDate ? "Change date" : "Add date";
+  }
+
+  let clearButton = item.querySelector("[data-action='clear-due']");
+  if (todo.dueDate && !clearButton) {
+    clearButton = document.createElement("button");
+    clearButton.type = "button";
+    clearButton.className = "clear-date-button";
+    clearButton.dataset.action = "clear-due";
+    clearButton.textContent = "Clear date";
+    clearButton.setAttribute("aria-label", "Clear due date for " + todo.text);
+    item.querySelector(".due-editor").appendChild(clearButton);
+  }
+  if (!todo.dueDate && clearButton) {
+    clearButton.remove();
+  }
 }
 
 function onClearDueDate(event) {
