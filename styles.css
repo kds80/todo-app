@@ -168,7 +168,7 @@ h1 {
 
 .todo {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
   padding: 14px 16px;
   border-bottom: 1px solid var(--line);
@@ -181,13 +181,18 @@ h1 {
 .todo input[type="checkbox"] {
   width: 1.15rem;
   height: 1.15rem;
+  margin-top: 3px;
   accent-color: var(--accent);
   flex: 0 0 auto;
 }
 
-.todo-text {
+.todo-body {
   flex: 1;
   min-width: 0;
+}
+
+.todo-text {
+  display: block;
   line-height: 1.4;
   overflow-wrap: anywhere;
 }
@@ -195,6 +200,56 @@ h1 {
 .todo.is-done .todo-text {
   color: #8b93a0;
   text-decoration: line-through;
+}
+
+/* A colored bar plus a text label. Color is not the only signal. */
+.todo.is-overdue {
+  background: #fff7f5;
+  box-shadow: inset 3px 0 0 var(--danger);
+}
+
+.todo.is-due-today {
+  background: #f4faf8;
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.due-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.todo.is-overdue .due-date {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.todo.is-due-today .due-date {
+  color: var(--accent-dark);
+  font-weight: 600;
+}
+
+.due-flag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.due-flag.is-overdue {
+  background: #f8ecec;
+  color: var(--danger);
+}
+
+.due-flag.is-today {
+  background: #e7f3f0;
+  color: var(--accent-dark);
 }
 
 .delete-button {

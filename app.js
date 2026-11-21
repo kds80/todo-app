@@ -278,8 +278,21 @@ function emptyMessage() {
 }
 
 function renderTodo(todo) {
+  // "overdue" and "today" are only for work that is still open.
+  // A completed todo keeps its date, but it is no longer flagged.
+  const status = dueStatus(todo);
+
   const item = document.createElement("li");
-  item.className = todo.completed ? "todo is-done" : "todo";
+  item.className = "todo";
+  if (todo.completed) {
+    item.classList.add("is-done");
+  }
+  if (status === "overdue") {
+    item.classList.add("is-overdue");
+  }
+  if (status === "today") {
+    item.classList.add("is-due-today");
+  }
   item.dataset.id = todo.id;
 
   const checkbox = document.createElement("input");
@@ -288,9 +301,17 @@ function renderTodo(todo) {
   checkbox.dataset.action = "toggle";
   checkbox.setAttribute("aria-label", todo.completed ? "Mark as not done" : "Mark as done");
 
+  const body = document.createElement("div");
+  body.className = "todo-body";
+
   const text = document.createElement("span");
   text.className = "todo-text";
   text.textContent = todo.text;
+  body.appendChild(text);
+
+  if (todo.dueDate) {
+    body.appendChild(renderDueSummary(todo, status));
+  }
 
   const removeButton = document.createElement("button");
   removeButton.type = "button";
@@ -300,9 +321,73 @@ function renderTodo(todo) {
   removeButton.setAttribute("aria-label", "Delete " + todo.text);
 
   item.appendChild(checkbox);
-  item.appendChild(text);
+  item.appendChild(body);
   item.appendChild(removeButton);
   return item;
+}
+
+// The friendly line under the todo text, plus an Overdue or Due today label.
+// The label is text, not color alone, so the status is still clear without color.
+function renderDueSummary(todo, status) {
+  const line = document.createElement("p");
+  line.className = "due-line";
+
+  const dateText = document.createElement("span");
+  dateText.className = "due-date";
+  dateText.textContent = "Due " + formatDueDate(todo.dueDate);
+  line.appendChild(dateText);
+
+  if (status === "overdue" || status === "today") {
+    const flag = document.createElement("span");
+    flag.className = "due-flag " + (status === "overdue" ? "is-overdue" : "is-today");
+    flag.textContent = status === "overdue" ? "Overdue" : "Due today";
+    line.appendChild(flag);
+  }
+
+  return line;
+}
+
+// "overdue" when the date is before today, "today" when it is today,
+// "upcoming" when it is later, and "none" when there is no date or the
+// todo is already completed.
+function dueStatus(todo) {
+  if (!todo.dueDate || todo.completed) {
+    return "none";
+  }
+
+  const due = parseIsoDate(todo.dueDate);
+  if (!due) {
+    return "none";
+  }
+
+  const today = startOfToday().getTime();
+  if (due.getTime() < today) {
+    return "overdue";
+  }
+  if (due.getTime() === today) {
+    return "today";
+  }
+  return "upcoming";
+}
+
+// Midnight this morning, in the browser's local timezone.
+function startOfToday() {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+}
+
+// "2026-11-21" becomes something like "Sat, Nov 21, 2026".
+function formatDueDate(isoDate) {
+  const date = parseIsoDate(isoDate);
+  if (!date) {
+    return "";
+  }
+  return date.toLocaleDateString(undefined, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
 function findTodo(id) {
