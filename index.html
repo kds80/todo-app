@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<!--
+  Todos
+  A single page you can open by double-clicking this file.
+  styles.css controls the look. app.js controls the behavior.
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Todos</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header class="app-header">
+        <p class="eyebrow">Today</p>
+        <h1>Todos</h1>
+        <p class="lede">A short list that stays in this browser.</p>
+      </header>
+
+      <!--
+        Submitting this form adds a todo.
+        Pressing Enter inside the input submits it, same as clicking Add.
+      -->
+      <form id="todo-form" class="todo-form">
+        <label class="visually-hidden" for="todo-input">New todo</label>
+        <input
+          id="todo-input"
+          name="todo"
+          type="text"
+          maxlength="200"
+          placeholder="What needs doing?"
+          autocomplete="off"
+          required
+        />
+        <button type="submit">Add</button>
+      </form>
+
+      <section class="list-panel" aria-label="Todo list">
+        <!-- Shown when the current filter has nothing to display. -->
+        <p id="empty-state" class="empty-state">Nothing here yet. Add a task above.</p>
+
+        <!-- app.js puts one <li> here for each visible todo. -->
+        <ul id="todo-list" class="todo-list is-hidden"></ul>
+
+        <!--
+          Hidden until there is at least one todo.
+          The class is-hidden is toggled from app.js.
+        -->
+        <footer id="todo-footer" class="todo-footer is-hidden">
+          <p id="remaining-count" class="remaining-count">0 items left</p>
+
+          <div class="filters" role="group" aria-label="Filter todos">
+            <button type="button" data-filter="all" aria-pressed="true">All</button>
+            <button type="button" data-filter="active" aria-pressed="false">Active</button>
+            <button type="button" data-filter="completed" aria-pressed="false">Completed</button>
+          </div>
+
+          <button type="button" id="clear-completed">Clear completed</button>
+        </footer>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
