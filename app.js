@@ -41,7 +41,9 @@ const filterButtons = document.querySelectorAll("[data-filter]");
 
 form.addEventListener("submit", onAddTodo);
 list.addEventListener("change", onToggleTodo);
+list.addEventListener("change", onDueDateChange);
 list.addEventListener("click", onDeleteTodo);
+list.addEventListener("click", onClearDueDate);
 clearCompletedButton.addEventListener("click", onClearCompleted);
 filterButtons.forEach(function (button) {
   button.addEventListener("click", onFilterClick);
@@ -90,6 +92,41 @@ function onToggleTodo(event) {
 
   // The checkbox has already flipped. Copy that into our list.
   todo.completed = checkbox.checked;
+  saveTodos();
+  render();
+}
+
+function onDueDateChange(event) {
+  const dueInput = event.target.closest("[data-action='set-due']");
+  if (!dueInput) {
+    return;
+  }
+
+  const id = dueInput.closest("[data-id]").dataset.id;
+  const todo = findTodo(id);
+  if (!todo) {
+    return;
+  }
+
+  // Empty means the calendar field was cleared. A real date is "YYYY-MM-DD".
+  todo.dueDate = normalizeDueDate(dueInput.value);
+  saveTodos();
+  render();
+}
+
+function onClearDueDate(event) {
+  const button = event.target.closest("[data-action='clear-due']");
+  if (!button) {
+    return;
+  }
+
+  const id = button.closest("[data-id]").dataset.id;
+  const todo = findTodo(id);
+  if (!todo) {
+    return;
+  }
+
+  todo.dueDate = null;
   saveTodos();
   render();
 }
@@ -313,6 +350,9 @@ function renderTodo(todo) {
     body.appendChild(renderDueSummary(todo, status));
   }
 
+  // The date field on the row is how a date is changed after the todo exists.
+  body.appendChild(renderDueEditor(todo));
+
   const removeButton = document.createElement("button");
   removeButton.type = "button";
   removeButton.className = "delete-button";
@@ -345,6 +385,42 @@ function renderDueSummary(todo, status) {
   }
 
   return line;
+}
+
+// A small date field under the task. "Add date" when there is none yet,
+// "Change date" when there is. Clear date is a button because the
+// browser's own clear control on a date input is easy to miss.
+function renderDueEditor(todo) {
+  const editor = document.createElement("div");
+  editor.className = "due-editor";
+
+  const label = document.createElement("label");
+  label.className = "due-editor-label";
+
+  const labelText = document.createElement("span");
+  labelText.textContent = todo.dueDate ? "Change date" : "Add date";
+
+  const dueInput = document.createElement("input");
+  dueInput.type = "date";
+  dueInput.dataset.action = "set-due";
+  dueInput.value = todo.dueDate || "";
+  dueInput.setAttribute("aria-label", "Due date for " + todo.text);
+
+  label.appendChild(labelText);
+  label.appendChild(dueInput);
+  editor.appendChild(label);
+
+  if (todo.dueDate) {
+    const clearButton = document.createElement("button");
+    clearButton.type = "button";
+    clearButton.className = "clear-date-button";
+    clearButton.dataset.action = "clear-due";
+    clearButton.textContent = "Clear date";
+    clearButton.setAttribute("aria-label", "Clear due date for " + todo.text);
+    editor.appendChild(clearButton);
+  }
+
+  return editor;
 }
 
 // "overdue" when the date is before today, "today" when it is today,
